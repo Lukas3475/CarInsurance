@@ -54,7 +54,6 @@ class CarInsurance() : ActionListener {
 
         winFrame.contentPane.add(insuranceInfo)
 
-
         winFrame.isVisible = true
     }
 
