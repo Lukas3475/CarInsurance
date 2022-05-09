@@ -11,24 +11,19 @@ import javax.swing.border.TitledBorder
 
 class CarInsuranceService(private val actionListener: ActionListener) {
 
-    val productionYearNames = populateYears()
+    private val productionYearNames = populateYears()
 
-    val carBrandNames = arrayOf("", "AUDI", "BMW", "OPEL")
+    private val carBrandNames = arrayOf("", "AUDI", "BMW", "OPEL")
 
-    val carAUDIModelNames = arrayOf("", "A1", "A3", "A4")
-    val carBMWModelNames = arrayOf("", "X1", "X3", "X4")
-    val carOPELModelNames = arrayOf("", "ASTRA", "CORSA", "INSYGNIA")
+    private val carAUDIModelNames = arrayOf("", "A1", "A3", "A4")
+    private val carBMWModelNames = arrayOf("", "X1", "X3", "X4")
+    private val carOPELModelNames = arrayOf("", "ASTRA", "CORSA", "INSIGNIA")
 
-    val engineCapacityName = arrayOf("", "1.0", "1.2", "1.4", "1.6", "1.8", "2.0", "2.2")
+    private val engineCapacityName = arrayOf("", "1.0", "1.2", "1.4", "1.6", "1.8", "2.0", "2.2")
 
-    val birthYearNames = populateBirthLicenceYear()
-    val licenceYearNames = populateBirthLicenceYear()
-    val regularCustomerAge = arrayOf("", "1", "2", "3", "4", "5", "6", "7", "8", "9")
-
-    private val residenceRegionNames = arrayOf("", "DOLNOŚLĄSKIE", "KUJAWSKO-POMORSKIE",
-        "LUBELSKIE", "LUBUSKIE", "ŁÓDZKIE", "MAŁOPOLSKIE", "MAZOWIECKIE",
-        "OPOLSKIE", "PODKARPACKIE", "PODLASKIE", "POMORSKIE", "ŚLĄSKIE",
-        "ŚWIĘTOKRZYSKIE", "WARMIŃSKO-MAZURSKIE", "WIELKOPOLSKIE", "ZACHODNIOPOMORSKIE")
+    private val licenceYearNames = arrayOf("", "1", "2", "3", "4", "5", "6", "7", "8", "9", "MORE")
+    private val regularCustomerAgeNames = arrayOf("", "1", "2", "3", "4", "5", "6", "7", "8", "9", "MORE")
+    private val hadAccidentNames = arrayOf("", "YES", "NO")
 
     private val maritalStatusName = arrayOf("", "MARRIED", "DIVORCED", "WIDOW", "SINGLE")
 
@@ -38,14 +33,6 @@ class CarInsuranceService(private val actionListener: ActionListener) {
         IntStream.range(2000, 2023).forEach { year: Int -> years.add(year.toString()) }
         return years.toTypedArray()
     }
-
-    private fun populateBirthLicenceYear(): Array<String> {
-        val years = ArrayList<String>()
-        years.add("")
-        IntStream.range(1920, 2005).forEach { year: Int -> years.add(year.toString()) }
-        return years.toTypedArray()
-    }
-
 
     private fun setComboBox(names: Array<String>, name: String, panel: JPanel): JPanel {
         panel.add(JLabel(name))
@@ -70,9 +57,7 @@ class CarInsuranceService(private val actionListener: ActionListener) {
             panel = setComboBox(arrayOf(), CarInsurance.CAR_MODEL, panel)
             panel = setComboBox(engineCapacityName, CarInsurance.ENGINE_CAPACITY, panel)
         } else {
-            panel = setComboBox(birthYearNames, CarInsurance.BIRTH_YEAR, panel)
             panel = setComboBox(licenceYearNames, CarInsurance.LICENCE_YEAR, panel)
-            panel = setComboBox(residenceRegionNames, CarInsurance.REGION, panel)
             panel = setComboBox(maritalStatusName, CarInsurance.MARITAL_STATUS, panel)
         }
         return panel
