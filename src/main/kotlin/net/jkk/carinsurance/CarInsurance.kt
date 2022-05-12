@@ -1,43 +1,48 @@
 package net.jkk.carinsurance
 
-import net.sf.clipsrules.jni.Environment
+import net.sf.clipsrules.jni.*
 import java.awt.FlowLayout
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.util.*
 import javax.swing.*
 
 class CarInsurance() : ActionListener {
     companion object {
         //Car Info
-        const val PRODUCTION_YEAR = "ProductionYear"
         const val CAR_BRAND = "CarBrand"
         const val CAR_MODEL = "CarModel"
-        const val FUEL_TYPE = "FuelType"
+        const val PRODUCTION_YEAR = "ProductionYear"
         const val ENGINE_CAPACITY = "EngineCapacity"
-        const val DOOR_AMOUNT = "DoorAmount"
-        const val BODY_TYPE = "BodyType"
+
         //Driver Info
-        const val BIRTH_YEAR = "Birth Year"
         const val LICENCE_YEAR = "LicenceYear"
-        const val REGION = "Region"
         const val MARITAL_STATUS = "MaritalStatus"
+        const val REGULAR_CUSTOMER_AGE = "RegularCustomerAge"
+        const val HAD_ACCIDENT = "HadAccident"
+
         //Window Info
         const val HEIGHT = 600
         const val WIDTH = 800
     }
 
-    lateinit var env: Environment
-    lateinit var resourceBundle: ResourceBundle
+    private val env: Environment = Environment()
+    private var carInsuranceService: CarInsuranceService
     lateinit var executionThread: Thread
-    private val carInsuranceService = CarInsuranceService(this)
 
     private var winFrame: JFrame = JFrame("Car Insurance")
 
     var isExecuting = false
 
     init {
+        try {
+            env.loadFromResource("/carinsurence.clp")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        env.reset()
+        carInsuranceService = CarInsuranceService(this, getCars())
+
         winFrame.contentPane.layout = BoxLayout(winFrame.contentPane, BoxLayout.Y_AXIS)
         winFrame.setSize(WIDTH, HEIGHT)
         winFrame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
@@ -58,12 +63,44 @@ class CarInsurance() : ActionListener {
     }
 
     override fun actionPerformed(e: ActionEvent?) {
-        if (e != null && e.source is JComboBox<*>) {
-            val box = e.source as JComboBox<*>
-            if (box.name == PRODUCTION_YEAR){
-                println(box.selectedItem)
+        try {
+            runCarInsurance(e)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    @Throws(Exception::class)
+    private fun runCarInsurance(event: ActionEvent?) {
+        if (event != null && event.source is JComboBox<*>) {
+            val box = event.source as JComboBox<*>
+            when (box.name) {
+                CAR_BRAND -> {
+                    carInsuranceService.changeBrandModel(box.selectedItem as String, box.parent as JPanel)
+                }
+                CAR_MODEL -> println()
+                PRODUCTION_YEAR -> println(box.selectedItem)
+                ENGINE_CAPACITY -> println(box.selectedItem)
+                LICENCE_YEAR -> println(box.selectedItem)
+                MARITAL_STATUS -> println(box.selectedItem)
+                REGULAR_CUSTOMER_AGE -> println(box.selectedItem)
+                HAD_ACCIDENT -> println(box.selectedItem)
             }
         }
+    }
+
+    private fun getCars(): MutableList<Car> {
+        val stringEval = "(get-all-cars)"
+        val multiField: MultifieldValue = env.eval(stringEval) as MultifieldValue
+        val cars: MutableList<Car> = ArrayList()
+        for (field in multiField) {
+            val factValue: FactAddressValue = field as FactAddressValue
+            val carBrand: String = (factValue.getSlotValue("carBrand") as LexemeValue).value
+            val carModel: String = (factValue.getSlotValue("carModel") as LexemeValue).value
+            val basePrice: Int = (factValue.getSlotValue("basePrice") as NumberValue).intValue()
+            cars.add(Car(carBrand, carModel, basePrice))
+        }
+        return cars
     }
 
 }

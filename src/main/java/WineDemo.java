@@ -1,16 +1,17 @@
 package net.sf.clipsrules.jni.examples.wine;
 
-import javax.swing.*;
-import javax.swing.border.*;
-import javax.swing.table.*;
-import java.awt.*;
-import java.awt.event.*;
-
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.MissingResourceException;
-
 import net.sf.clipsrules.jni.*;
+
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 /* TBD module qualifier with find-all-facts */
 

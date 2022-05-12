@@ -255,10 +255,4 @@
     (assert (constantRise (value ?*constantRise*)))
 )
 
-(deffunction get-all-cars ()
-    (bind ?facts (find-all-facts ((?c car)) TRUE))
-)
 
-;;(deffunction print-all-cars ()
-;;(do-for-all-facts ((?c car)) TRUE
-;;(println ?c:carBrand)))
