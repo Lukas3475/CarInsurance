@@ -1,7 +1,8 @@
 package net.jkk.carinsurance
 
-import net.sf.clipsrules.jni.*
+import net.sf.clipsrules.jni.Environment
 import java.awt.FlowLayout
+import java.awt.GridLayout
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -23,13 +24,17 @@ class CarInsurance() : ActionListener {
 
         //Window Info
         const val HEIGHT = 600
-        const val WIDTH = 800
+        const val WIDTH = 900
     }
 
     private val env: Environment = Environment()
+    private var executionThread: Thread? = null
     private var carInsuranceService: CarInsuranceService
-    lateinit var executionThread: Thread
 
+    private var carInfoPanel: JPanel
+    private var driverInfoPanel: JPanel
+    private var buttonPanel: JPanel
+    private var infoPanel: JPanel
     private var winFrame: JFrame = JFrame("Car Insurance")
 
     var isExecuting = false
@@ -41,23 +46,29 @@ class CarInsurance() : ActionListener {
             e.printStackTrace()
         }
         env.reset()
-        carInsuranceService = CarInsuranceService(this, getCars())
+        carInsuranceService = CarInsuranceService(this, env)
 
-        winFrame.contentPane.layout = BoxLayout(winFrame.contentPane, BoxLayout.Y_AXIS)
+        winFrame.contentPane.layout = GridLayout(2, 1)
         winFrame.setSize(WIDTH, HEIGHT)
         winFrame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
         val screenSize = Toolkit.getDefaultToolkit().screenSize
         winFrame.setLocation((screenSize.width - WIDTH) / 2, (screenSize.height - HEIGHT) / 2)
 
-        val carInfoPanel = carInsuranceService.createPanel("Car Info", 7, 2, InfoType.CAR_INFO)
-        val driverInfoPanel = carInsuranceService.createPanel("Driver Info", 7, 2, InfoType.DRIVER_INFO)
+        infoPanel = JPanel()
+        infoPanel.name = "Info Panel"
 
+        carInfoPanel = carInsuranceService.createPanel("Car Info", 4, 2, InfoType.CAR_INFO)
+        driverInfoPanel = carInsuranceService.createPanel("Driver Info", 4, 2, InfoType.DRIVER_INFO)
+        buttonPanel = carInsuranceService.createPanel("Button Info", 1, 1, InfoType.BUTTON_INFO)
+        setBtnActionEvent()
         val insuranceInfo = JPanel()
         insuranceInfo.layout = FlowLayout()
         insuranceInfo.add(carInfoPanel)
         insuranceInfo.add(driverInfoPanel)
+        insuranceInfo.add(buttonPanel)
 
         winFrame.contentPane.add(insuranceInfo)
+        winFrame.contentPane.add(infoPanel)
 
         winFrame.isVisible = true
     }
@@ -72,37 +83,95 @@ class CarInsurance() : ActionListener {
 
     @Throws(Exception::class)
     private fun runCarInsurance(event: ActionEvent?) {
+        if (isExecuting) return
         if (event != null && event.source is JComboBox<*>) {
             val box = event.source as JComboBox<*>
+            if (box.selectedItem == "") return
             when (box.name) {
                 CAR_BRAND -> {
                     carInsuranceService.changeBrandModel(box.selectedItem as String, box.parent as JPanel)
+                    box.isEnabled = false
                 }
-                CAR_MODEL -> println()
-                PRODUCTION_YEAR -> println(box.selectedItem)
-                ENGINE_CAPACITY -> println(box.selectedItem)
-                LICENCE_YEAR -> println(box.selectedItem)
-                MARITAL_STATUS -> println(box.selectedItem)
-                REGULAR_CUSTOMER_AGE -> println(box.selectedItem)
-                HAD_ACCIDENT -> println(box.selectedItem)
+                CAR_MODEL -> {
+                    if (box.selectedItem == null) {
+                        return
+                    } else box.isEnabled = false
+                }
+                PRODUCTION_YEAR -> {
+                    env.assertString("(attribute (variable productionYear) (value ${box.selectedItem}))")
+                    box.isEnabled = false
+                }
+                ENGINE_CAPACITY -> {
+                    env.assertString("(attribute (variable engineCapacity) (value ${box.selectedItem}))")
+                    box.isEnabled = false
+                }
+                LICENCE_YEAR -> {
+                    env.assertString("(attribute (variable licenceYear) (value ${box.selectedItem}))")
+                    box.isEnabled = false
+                }
+                MARITAL_STATUS -> {
+                    env.assertString("(attribute (variable maritalStatus) (value ${box.selectedItem}))")
+                    box.isEnabled = false
+                }
+                REGULAR_CUSTOMER_AGE -> {
+                    env.assertString("(attribute (variable regularCustomerAge) (value ${box.selectedItem}))")
+                    box.isEnabled = false
+                }
+                HAD_ACCIDENT -> {
+                    env.assertString("(attribute (variable hadAccident) (value ${box.selectedItem}))")
+                    box.isEnabled = false
+                }
+            }
+
+            if (carInsuranceService.isAllComboBoxesSet(carInfoPanel, driverInfoPanel)) {
+                val runningThread = Runnable {
+                    try {
+                        env.run()
+                        isExecuting = false
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                isExecuting = true
+                executionThread = Thread(runningThread)
+                executionThread!!.start()
+                while (isExecuting){
+                    Thread.sleep(2000)
+                }
+
+                carInsuranceService.getPrice(carInfoPanel)
+
+                infoPanel = carInsuranceService.crateInfoPanel(infoPanel, carInsuranceService.getPriceInfo())
+                winFrame.contentPane.revalidate()
+                winFrame.contentPane.repaint()
+                env.reset()
+
+                carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach { it.isEnabled = false }
+                driverInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach { it.isEnabled = false }
             }
         }
     }
 
-    private fun getCars(): MutableList<Car> {
-        val stringEval = "(get-all-cars)"
-        val multiField: MultifieldValue = env.eval(stringEval) as MultifieldValue
-        val cars: MutableList<Car> = ArrayList()
-        for (field in multiField) {
-            val factValue: FactAddressValue = field as FactAddressValue
-            val carBrand: String = (factValue.getSlotValue("carBrand") as LexemeValue).value
-            val carModel: String = (factValue.getSlotValue("carModel") as LexemeValue).value
-            val basePrice: Int = (factValue.getSlotValue("basePrice") as NumberValue).intValue()
-            cars.add(Car(carBrand, carModel, basePrice))
+    private fun setBtnActionEvent() {
+        val btn = buttonPanel.components.filterIsInstance(JButton::class.java).first()
+        btn.addActionListener {
+            carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach {
+                if (it.name == CarInsurance.CAR_MODEL) it.removeAllItems()
+                it.selectedItem = ""
+                it.isEnabled = true
+            }
+            driverInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach {
+                it.selectedItem = ""
+                it.isEnabled = true
+            }
+            val panel =
+                winFrame.contentPane.components.filterIsInstance(JPanel::class.java).first { it.name == "Info Panel" }
+            panel.removeAll()
+            winFrame.contentPane.revalidate()
+            winFrame.contentPane.repaint()
         }
-        return cars
+        env.reset()
     }
-
 }
 
 fun main() {
