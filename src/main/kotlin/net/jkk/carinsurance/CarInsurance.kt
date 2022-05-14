@@ -11,16 +11,16 @@ import javax.swing.*
 class CarInsurance() : ActionListener {
     companion object {
         //Car Info
-        const val CAR_BRAND = "CarBrand"
-        const val CAR_MODEL = "CarModel"
-        const val PRODUCTION_YEAR = "ProductionYear"
-        const val ENGINE_CAPACITY = "EngineCapacity"
+        const val CAR_BRAND = "carBrand"
+        const val CAR_MODEL = "carModel"
+        const val PRODUCTION_YEAR = "productionYear"
+        const val ENGINE_CAPACITY = "engineCapacity"
 
         //Driver Info
-        const val LICENCE_YEAR = "LicenceYear"
-        const val MARITAL_STATUS = "MaritalStatus"
-        const val REGULAR_CUSTOMER_AGE = "RegularCustomerAge"
-        const val HAD_ACCIDENT = "HadAccident"
+        const val LICENCE_YEAR = "licenceYear"
+        const val MARITAL_STATUS = "maritalStatus"
+        const val REGULAR_CUSTOMER_AGE = "regularCustomerAge"
+        const val HAD_ACCIDENT = "hadAccident"
 
         //Window Info
         const val HEIGHT = 600
@@ -90,40 +90,29 @@ class CarInsurance() : ActionListener {
             when (box.name) {
                 CAR_BRAND -> {
                     carInsuranceService.changeBrandModel(box.selectedItem as String, box.parent as JPanel)
-                    box.isEnabled = false
-                }
-                CAR_MODEL -> {
-                    if (box.selectedItem == null) {
-                        return
-                    } else box.isEnabled = false
                 }
                 PRODUCTION_YEAR -> {
-                    env.assertString("(attribute (variable productionYear) (value ${box.selectedItem}))")
-                    box.isEnabled = false
+                    env.assertString("(attribute (variable ${box.name}) (value ${box.selectedItem}))")
                 }
                 ENGINE_CAPACITY -> {
-                    env.assertString("(attribute (variable engineCapacity) (value ${box.selectedItem}))")
-                    box.isEnabled = false
+                    env.assertString("(attribute (variable ${box.name}) (value ${box.selectedItem}))")
                 }
                 LICENCE_YEAR -> {
-                    env.assertString("(attribute (variable licenceYear) (value ${box.selectedItem}))")
-                    box.isEnabled = false
+                    env.assertString("(attribute (variable ${box.name}) (value ${box.selectedItem}))")
                 }
                 MARITAL_STATUS -> {
-                    env.assertString("(attribute (variable maritalStatus) (value ${box.selectedItem}))")
-                    box.isEnabled = false
+                    env.assertString("(attribute (variable ${box.name}) (value ${box.selectedItem}))")
                 }
                 REGULAR_CUSTOMER_AGE -> {
-                    env.assertString("(attribute (variable regularCustomerAge) (value ${box.selectedItem}))")
-                    box.isEnabled = false
+                    env.assertString("(attribute (variable ${box.name}) (value ${box.selectedItem}))")
                 }
                 HAD_ACCIDENT -> {
-                    env.assertString("(attribute (variable hadAccident) (value ${box.selectedItem}))")
-                    box.isEnabled = false
+                    env.assertString("(attribute (variable ${box.name}) (value ${box.selectedItem}))")
                 }
             }
 
             if (carInsuranceService.isAllComboBoxesSet(carInfoPanel, driverInfoPanel)) {
+                carInsuranceService.removeDuplicatedAttributes()
                 val runningThread = Runnable {
                     try {
                         env.run()
@@ -135,28 +124,29 @@ class CarInsurance() : ActionListener {
                 isExecuting = true
                 executionThread = Thread(runningThread)
                 executionThread!!.start()
-                while (isExecuting){
+                while (isExecuting) {
                     Thread.sleep(2000)
                 }
-
                 carInsuranceService.getPrice(carInfoPanel)
 
-                infoPanel = carInsuranceService.crateInfoPanel(infoPanel, carInsuranceService.getPriceInfo())
+                infoPanel =
+                    carInsuranceService.crateInfoPanel(infoPanel, carInsuranceService.getPriceInfo(), carInfoPanel)
                 winFrame.contentPane.revalidate()
                 winFrame.contentPane.repaint()
-                env.reset()
 
                 carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach { it.isEnabled = false }
                 driverInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach { it.isEnabled = false }
+                env.reset()
             }
         }
     }
 
+    //button event for clearing CLIPs environment and window controls
     private fun setBtnActionEvent() {
         val btn = buttonPanel.components.filterIsInstance(JButton::class.java).first()
         btn.addActionListener {
             carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach {
-                if (it.name == CarInsurance.CAR_MODEL) it.removeAllItems()
+                if (it.name == CAR_MODEL) it.removeAllItems()
                 it.selectedItem = ""
                 it.isEnabled = true
             }

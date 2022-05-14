@@ -24,6 +24,8 @@ class CarInsuranceService(
     private val hadAccidentNames = arrayOf("", "YES", "NO")
     private val maritalStatusName = arrayOf("", "MARRIED", "DIVORCED", "WIDOW", "SINGLE")
 
+
+    //populating array for combo box
     private fun populateYears(): Array<String> {
         val years = ArrayList<String>()
         years.add("")
@@ -31,6 +33,7 @@ class CarInsuranceService(
         return years.toTypedArray()
     }
 
+    //setting combo box for window
     private fun setComboBox(names: Array<String>, name: String, panel: JPanel): JPanel {
         panel.add(JLabel(name))
         val comboBox: JComboBox<String> = JComboBox(names)
@@ -40,6 +43,7 @@ class CarInsuranceService(
         return panel
     }
 
+    //creating panels for window
     fun createPanel(panelName: String, rows: Int, cols: Int, type: InfoType): JPanel {
         var panel = JPanel()
         panel.layout = GridLayout(rows, cols)
@@ -64,6 +68,7 @@ class CarInsuranceService(
         return panel
     }
 
+    //checking if all combo boxes are set in panels
     fun isAllComboBoxesSet(carInfoPanel: JPanel, driverInfoPanel: JPanel): Boolean {
         return carInfoPanel.components.filterIsInstance(JComboBox::class.java)
             .all { it.selectedItem != "" && it.selectedItem != null } &&
@@ -71,6 +76,7 @@ class CarInsuranceService(
                     .all { it.selectedItem != "" && it.selectedItem != null }
     }
 
+    //getting car from panel
     private fun getCar(carInfoPanel: JPanel): Car {
         var car = Car()
         carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach {
@@ -81,6 +87,7 @@ class CarInsuranceService(
         return car
     }
 
+    //setting band models for given brand in panel
     fun changeBrandModel(carBrand: String, panel: JPanel) {
         var box: JComboBox<*>
         panel.components.forEach {
@@ -93,6 +100,7 @@ class CarInsuranceService(
         }
     }
 
+    //getting model names for given brand model
     private fun getCorrectModelForBrand(cars: MutableList<Car>, carBrand: String = ""): Array<String> {
         val carModels: MutableList<String> = ArrayList()
         carModels.add("")
@@ -104,6 +112,7 @@ class CarInsuranceService(
         return carModels.toTypedArray()
     }
 
+    //getting car brands from given car list
     private fun getCarBrands(cars: MutableList<Car>): Array<String> {
         val carBrands: MutableList<String> = ArrayList()
         carBrands.add("")
@@ -111,23 +120,13 @@ class CarInsuranceService(
         return carBrands.toTypedArray()
     }
 
-    fun getPriceInfo(): MutableList<PriceInfo> {
-        val multiField: MultifieldValue = env.eval("(get-price-info)") as MultifieldValue
-        val priceInfoList: MutableList<PriceInfo> = ArrayList()
-        for (field in multiField) {
-            val factValue: FactAddressValue = field as FactAddressValue
-            val infoType: String = (factValue.getSlotValue("info-type") as StringValue).value
-            val desc: String = (factValue.getSlotValue("desc") as StringValue).value
-            val value: Double = (factValue.getSlotValue("value") as NumberValue).doubleValue()
-            priceInfoList.add(PriceInfo(infoType, desc, value))
-        }
-        return priceInfoList
-    }
-
-
-
-    fun crateInfoPanel(infoPanel: JPanel, priceInfoList: MutableList<PriceInfo>): JPanel {
-        infoPanel.layout = GridLayout(priceInfoList.size, 1)
+    //creating info panel for displaying insurance info
+    fun crateInfoPanel(infoPanel: JPanel, priceInfoList: MutableList<PriceInfo>, carInfoPanel: JPanel): JPanel {
+        infoPanel.layout = GridLayout(priceInfoList.size + 1, 1)
+        val priceLabel = JLabel("Insurance price: $${getPrice(carInfoPanel)}")
+        priceLabel.verticalAlignment = SwingConstants.CENTER
+        priceLabel.horizontalAlignment = SwingConstants.CENTER
+        infoPanel.add(priceLabel)
         priceInfoList.forEach { priceInfo ->
             val infoTile = JPanel()
             infoTile.layout = GridLayout(1, 3)
@@ -154,18 +153,47 @@ class CarInsuranceService(
         return infoPanel
     }
 
-    fun getPrice(carInfoPanel: JPanel): Double {
+    //removing duplicated attributes in CLIPs environment
+    fun removeDuplicatedAttributes() {
+        val variableArray = arrayListOf(CarInsurance.PRODUCTION_YEAR,
+            CarInsurance.ENGINE_CAPACITY,
+            CarInsurance.LICENCE_YEAR,
+            CarInsurance.MARITAL_STATUS,
+            CarInsurance.HAD_ACCIDENT,
+            CarInsurance.REGULAR_CUSTOMER_AGE)
+        variableArray.forEach {
+            env.eval("(remove-duplicated-attributes $it)")
+        }
+    }
+
+    //getting price info from CLIPs environment
+    fun getPriceInfo(): MutableList<PriceInfo> {
+        val multiField: MultifieldValue = env.eval("(get-price-info)") as MultifieldValue
+        val priceInfoList: MutableList<PriceInfo> = ArrayList()
+        for (field in multiField) {
+            val factValue: FactAddressValue = field as FactAddressValue
+            val infoType: String = (factValue.getSlotValue("info-type") as StringValue).value
+            val desc: String = (factValue.getSlotValue("desc") as StringValue).value
+            val value: String = (factValue.getSlotValue("value") as StringValue).value
+            priceInfoList.add(PriceInfo(infoType, desc, value))
+        }
+        return priceInfoList
+    }
+
+    //getting price after calculating in CLIPs environment
+    fun getPrice(carInfoPanel: JPanel): String {
         val car = getCar(carInfoPanel)
         env.eval("(calculate-insurance ${car.carBrand} ${car.carModel} ${car.basePrice})")
         val multiField: MultifieldValue = env.eval("(get-price-after-calculations)") as MultifieldValue
-        var price: Double = 0.0
+        var price = 0.0
         for (field in multiField) {
             val factValue: FactAddressValue = field as FactAddressValue
             price = (factValue.getSlotValue("changed-price") as NumberValue).doubleValue()
         }
-        return price
+        return String.format("%.2f", price)
     }
 
+    //getting list of cars from CLIPs environment
     private fun getCars(): MutableList<Car> {
         val stringEval = "(get-all-cars)"
         val multiField: MultifieldValue = env.eval(stringEval) as MultifieldValue

@@ -21,7 +21,7 @@
 (deftemplate price-info
     (slot info-type (type STRING))
     (slot desc (type STRING))
-    (slot value)
+    (slot value (type STRING))
 )
 
 (deftemplate car
@@ -63,7 +63,7 @@
     (test (and (eq ?variable engineCapacity) (eq ?value 1.0)))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.1))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.0") (value 0.1)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.0") (value "10%")))
 )
 
 (defrule engine-capacity-1-2
@@ -71,7 +71,7 @@
     (test (and (eq ?variable engineCapacity) (eq ?value 1.2)))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.15))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.2") (value 0.15)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.2") (value "15%")))
 )
 
 (defrule engine-capacity-1-4
@@ -79,7 +79,7 @@
     (test (and (eq ?variable engineCapacity) (eq ?value 1.4)))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.2))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.4") (value 0.2)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.4") (value "20%")))
 )
 
 (defrule engine-capacity-1-6
@@ -87,7 +87,7 @@
     (test (and (eq ?variable engineCapacity) (eq ?value 1.6)))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.25))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.6") (value 0.25)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.6") (value "25%")))
 )
 
 (defrule engine-capacity-1-8
@@ -95,7 +95,7 @@
     (test (and (eq ?variable engineCapacity) (eq ?value 1.8)))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.3))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.8") (value 0.3)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 1.8") (value "30%")))
 )
 
 (defrule engine-capacity-2-0
@@ -103,7 +103,7 @@
     (test (and (eq ?variable engineCapacity) (eq ?value 2.0)))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.35))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 2.0") (value 0.35)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 2.0") (value "35%")))
 )
 
 (defrule engine-capacity-2-2
@@ -111,7 +111,7 @@
     (test (and (eq ?variable engineCapacity) (eq ?value 2.2)))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.4))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 2.2") (value 0.4)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for engine capacity 2.2") (value "40%")))
 )
 
 ;;***************************
@@ -123,7 +123,7 @@
     (test (and (eq ?variable productionYear) (and (> ?value 2019) (< ?value 2023))))
     =>
     (bind ?*percentDiscount* (+ ?*percentDiscount* 0.09))
-    (assert (price-info (info-type "Percent Discount") (desc "Discount for production year") (value 0.09)))
+    (assert (price-info (info-type "Percent Discount") (desc "Discount for production year between 2020 and 2022") (value "9%")))
 )
 
 (defrule production-year-old
@@ -131,7 +131,7 @@
     (test (and (eq ?variable productionYear) (and (>= ?value 2000) (<= ?value 2019))))
     =>
     (bind ?*percentRise* (+ ?*percentRise* 0.13))
-    (assert (price-info (info-type "Percent Rise") (desc "Rise for production year") (value 0.13)))
+    (assert (price-info (info-type "Percent Rise") (desc "Rise for production year between 2000 and 2019") (value "13%")))
 )
 
 ;;************************
@@ -143,7 +143,7 @@
     (test (and (eq ?variable licenceYear) (and (>= ?value 1) (<= ?value 5))))
     =>
     (bind ?*constantRise* (+ ?*constantRise* 300.0))
-    (assert (price-info (info-type "Constant Rise") (desc "Rise for production year") (value 300.0)))
+    (assert (price-info (info-type "Constant Rise") (desc "Rise for having a licence shorter than 5 years") (value "$300.00")))
 )
 
 ;;********************************
@@ -155,7 +155,7 @@
     (test (and (eq ?variable regularCustomerAge) (and (>= ?value 6) (<= ?value 9))))
     =>
     (bind ?*constantDiscount* (+ ?*constantDiscount* 200.0))
-    (assert (price-info (info-type "Constant Discount") (desc "Discount for regular customer age between 6 9 years") (value 200.0)))
+    (assert (price-info (info-type "Constant Discount") (desc "Discount for regular customer age between 6 9 years") (value "$200.00")))
 )
 
 ;;************************
@@ -167,7 +167,7 @@
     (test (and (eq ?variable hadAccident) (eq ?value YES)))
     =>
     (bind ?*constantRise* (+ ?*constantRise* 650.0))
-    (assert (price-info (info-type "Constant Rise") (desc "Rise for having accident") (value 650.0)))
+    (assert (price-info (info-type "Constant Rise") (desc "Rise for having accident") (value "$650.00")))
 )
 
 (defrule had-accident-no
@@ -175,7 +175,7 @@
     (test (and (eq ?variable hadAccident) (eq ?value NO)))
     =>
     (bind ?*constantDiscount* (+ ?*constantDiscount* 200.0))
-    (assert (price-info (info-type "Constant Discount") (desc "Discount for not having accident") (value 200.0)))
+    (assert (price-info (info-type "Constant Discount") (desc "Discount for not having accident") (value "$200.00")))
 )
 
 ;;**************************
@@ -187,7 +187,7 @@
     (test (and (eq ?variable maritalStatus) (eq ?value MARRIED)))
     =>
     (bind ?*constantDiscount* (+ ?*constantDiscount* 100.0))
-    (assert (price-info (info-type "Constant Discount") (desc "Discount for being married") (value 100.0)))
+    (assert (price-info (info-type "Constant Discount") (desc "Discount for being married") (value "$100.00")))
 )
 
 (defrule marital-status-divorced
@@ -195,7 +195,7 @@
     (test (and (eq ?variable maritalStatus) (eq ?value DIVORCED)))
     =>
     (bind ?*constantDiscount* (+ ?*constantDiscount* 45.0))
-    (assert (price-info (info-type "Constant Discount") (desc "Discount for being divorced") (value 45.0)))
+    (assert (price-info (info-type "Constant Discount") (desc "Discount for being divorced") (value "$45.00")))
 )
 
 (defrule marital-status-widow
@@ -203,7 +203,7 @@
     (test (and (eq ?variable maritalStatus) (eq ?value WIDOW)))
     =>
     (bind ?*constantRise* (+ ?*constantRise* 150.0))
-    (assert (price-info (info-type "Constant Rise") (desc "Rise for being widow") (value 150.0)))
+    (assert (price-info (info-type "Constant Rise") (desc "Rise for being widow") (value "$150.00")))
 )
 
 (defrule marital-status-single
@@ -211,7 +211,7 @@
     (test (and (eq ?variable maritalStatus) (eq ?value SINGLE)))
     =>
     (bind ?*constantRise* (+ ?*constantRise* 300.0))
-    (assert (price-info (info-type "Constant Rise") (desc "Rise for being single") (value 300.0)))
+    (assert (price-info (info-type "Constant Rise") (desc "Rise for being single") (value "$300.00")))
 )
 
 
@@ -219,14 +219,7 @@
 ;; Functions*
 ;;***********
 
-(deffunction get-all-cars ()
-    (bind ?facts (find-all-facts ((?c car)) TRUE))
-)
-
-(deffunction get-all-attributes ()
-    (bind ?facts (find-all-facts ((?a attribute)) TRUE))
-)
-
+;;calculating insurance for given car brand and car model from base price using global variables
 (deffunction calculate-insurance (?carBrand ?carModel ?basePrice)
     (bind ?priceAfter ?basePrice)
     (do-for-all-facts ((?c car)) (and (eq ?c:carBrand ?carBrand) (eq ?c:carModel ?carModel))
@@ -237,6 +230,29 @@
     (assert (price-after (changed-price ?priceAfter)))
 ))
 
+
+;;counting same attributes and then deleting duplicates leaving the last one added
+(deffunction remove-duplicated-attributes (?variable)
+    (bind ?facts (get-fact-list))
+    (bind ?count 0)
+    (foreach ?f ?facts
+        (bind ?index (fact-index ?f))
+        (if (eq (fact-relation ?index) attribute) then
+            (if (eq (fact-slot-value ?index variable) ?variable)
+                then (bind ?count (+ ?count 1))
+            )
+        )
+    )
+    (foreach ?f ?facts
+        (bind ?index (fact-index ?f))
+        (if (eq (fact-relation ?index) attribute) then
+            (if (and (eq (fact-slot-value ?index variable) ?variable) (> ?count 1))
+                then (retract ?f) (bind ?count (- ?count 1))
+            )
+        )
+    )
+)
+
 (deffunction get-price-after-calculations ()
     (bind ?facts (find-all-facts ((?p price-after)) TRUE))
 )
@@ -245,6 +261,6 @@
     (bind ?facts (find-all-facts ((?p price-info)) TRUE))
 )
 
-;;(deffunction print-all-cars ()
-;;(do-for-all-facts ((?c car)) TRUE
-;;(println ?c:carBrand)))
+(deffunction get-all-cars ()
+    (bind ?facts (find-all-facts ((?c car)) TRUE))
+)
