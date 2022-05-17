@@ -1,14 +1,19 @@
 package net.jkk.carinsurance
 
+import com.itextpdf.text.*
+import com.itextpdf.text.pdf.PdfPCell
+import com.itextpdf.text.pdf.PdfPTable
+import com.itextpdf.text.pdf.PdfWriter
 import net.sf.clipsrules.jni.Environment
 import java.awt.FlowLayout
 import java.awt.GridLayout
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
+import java.io.FileOutputStream
 import javax.swing.*
 
-class CarInsurance() : ActionListener {
+class CarInsurance : ActionListener {
     companion object {
         //Car Info
         const val CAR_BRAND = "carBrand"
@@ -69,7 +74,6 @@ class CarInsurance() : ActionListener {
 
         winFrame.contentPane.add(insuranceInfo)
         winFrame.contentPane.add(infoPanel)
-
         winFrame.isVisible = true
     }
 
@@ -127,12 +131,14 @@ class CarInsurance() : ActionListener {
                 while (isExecuting) {
                     Thread.sleep(2000)
                 }
-                carInsuranceService.getPrice(carInfoPanel)
-
+                val totalPrice = carInsuranceService.getPrice(carInfoPanel)
+                val priceInfoList = carInsuranceService.getPriceInfo()
                 infoPanel =
-                    carInsuranceService.crateInfoPanel(infoPanel, carInsuranceService.getPriceInfo(), carInfoPanel)
+                    carInsuranceService.crateInfoPanel(infoPanel, priceInfoList, carInfoPanel)
                 winFrame.contentPane.revalidate()
                 winFrame.contentPane.repaint()
+
+                generatePDF(priceInfoList, carInfoPanel, totalPrice)
 
                 carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach { it.isEnabled = false }
                 driverInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach { it.isEnabled = false }
@@ -161,6 +167,73 @@ class CarInsurance() : ActionListener {
             winFrame.contentPane.repaint()
         }
         env.reset()
+    }
+
+    private fun generatePDF(priceInfoList: MutableList<PriceInfo>, carInfoPanel: JPanel, price: String) {
+        val car = carInsuranceService.getCar(carInfoPanel)
+        val document = Document()
+        PdfWriter.getInstance(document, FileOutputStream("recipe.pdf"))
+        document.open()
+        val font1 = FontFactory.getFont(FontFactory.HELVETICA, 16.0f, BaseColor.BLACK)
+        val font2 = FontFactory.getFont(FontFactory.HELVETICA, 14.0f, BaseColor.BLACK)
+        val font3 = FontFactory.getFont(FontFactory.HELVETICA, 11.0f, BaseColor.BLACK)
+        val boldFont2 = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14.0f, BaseColor.BLACK)
+        val title = Paragraph("Receipt for your car insurance", font1)
+        title.alignment = Element.ALIGN_CENTER
+        document.add(title)
+        document.add(Chunk.NEWLINE)
+        document.add(Chunk.NEWLINE)
+        val carInfoTable = PdfPTable(3)
+
+        carInfoTable.addCell(PdfPCell(Paragraph("Car brand", boldFont2)))
+        carInfoTable.addCell(PdfPCell(Paragraph("Car model", boldFont2)))
+        carInfoTable.addCell(PdfPCell(Paragraph("Base price", boldFont2)))
+
+        carInfoTable.addCell(Paragraph(car.carBrand, font2))
+        carInfoTable.addCell(Paragraph(car.carModel, font2))
+        carInfoTable.addCell(Paragraph(car.basePrice.toString(), font2))
+
+        carInfoTable.rows.forEach { row ->
+            row.cells.forEach {
+                it.horizontalAlignment = Element.ALIGN_CENTER
+                it.setPadding(7f)
+            }
+        }
+        document.add(carInfoTable)
+
+        document.add(Chunk.NEWLINE)
+        document.add(Chunk.NEWLINE)
+
+        val insuranceTableInfo = PdfPTable(3)
+        insuranceTableInfo.addCell(PdfPCell())
+        insuranceTableInfo.addCell(PdfPCell(Paragraph("Description", boldFont2)))
+        insuranceTableInfo.addCell(PdfPCell(PdfPCell(Paragraph("Value", boldFont2))))
+
+        priceInfoList.forEach {
+            insuranceTableInfo.addCell(PdfPCell(Paragraph(it.infoType, font3)))
+            insuranceTableInfo.addCell(PdfPCell(Paragraph(it.desc, font3)))
+            insuranceTableInfo.addCell(PdfPCell(Paragraph(it.value, font3)))
+        }
+
+        insuranceTableInfo.rows.forEach { row ->
+            row.cells.forEach {
+                it.setPadding(12.5f)
+                it.horizontalAlignment = Element.ALIGN_CENTER
+                it.verticalAlignment = Element.ALIGN_CENTER
+            }
+        }
+
+        document.add(insuranceTableInfo)
+
+        document.add(Chunk.NEWLINE)
+        document.add(Chunk.NEWLINE)
+
+        val totalPrice = Paragraph("Total price is: $", boldFont2)
+        totalPrice.add(Chunk(price, font2))
+        totalPrice.alignment = Element.ALIGN_RIGHT
+        document.add(totalPrice)
+
+        document.close()
     }
 }
 

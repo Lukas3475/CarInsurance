@@ -1,6 +1,7 @@
 package net.jkk.carinsurance
 
 import net.sf.clipsrules.jni.*
+import java.awt.Color
 import java.awt.GridLayout
 import java.awt.event.ActionListener
 import java.util.stream.IntStream
@@ -11,6 +12,20 @@ class CarInsuranceService(
     private val actionListener: ActionListener,
     private val env: Environment,
 ) {
+
+    companion object {
+        //Car Info
+        const val CAR_BRAND = "Car Brand"
+        const val CAR_MODEL = "Car Model"
+        const val PRODUCTION_YEAR = "Production Year"
+        const val ENGINE_CAPACITY = "Engine Capacity"
+
+        //Driver Info
+        const val LICENCE_YEAR = "Licence Year"
+        const val MARITAL_STATUS = "Marital Status"
+        const val REGULAR_CUSTOMER_AGE = "Regular Customer Age"
+        const val HAD_ACCIDENT = "Had Accident"
+    }
 
     private val cars = getCars()
     private val carBrandNames = getCarBrands(cars)
@@ -25,48 +40,33 @@ class CarInsuranceService(
     private val maritalStatusName = arrayOf("", "MARRIED", "DIVORCED", "WIDOW", "SINGLE")
 
 
-    //populating array for combo box
-    private fun populateYears(): Array<String> {
-        val years = ArrayList<String>()
-        years.add("")
-        IntStream.range(2000, 2023).forEach { year: Int -> years.add(year.toString()) }
-        return years.toTypedArray()
-    }
-
-    //setting combo box for window
-    private fun setComboBox(names: Array<String>, name: String, panel: JPanel): JPanel {
-        panel.add(JLabel(name))
-        val comboBox: JComboBox<String> = JComboBox(names)
-        comboBox.name = name
-        panel.add(comboBox)
-        comboBox.addActionListener(actionListener)
-        return panel
-    }
-
     //creating panels for window
     fun createPanel(panelName: String, rows: Int, cols: Int, type: InfoType): JPanel {
         var panel = JPanel()
         panel.layout = GridLayout(rows, cols)
-        panel.border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),
+        panel.border = BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(),
             panelName,
             TitledBorder.CENTER,
-            TitledBorder.ABOVE_TOP)
+            TitledBorder.ABOVE_TOP
+        )
         panel.name = panelName
         if (type == InfoType.CAR_INFO) {
-            panel = setComboBox(carBrandNames, CarInsurance.CAR_BRAND, panel)
-            panel = setComboBox(carModelNames, CarInsurance.CAR_MODEL, panel)
-            panel = setComboBox(productionYearNames, CarInsurance.PRODUCTION_YEAR, panel)
-            panel = setComboBox(engineCapacityName, CarInsurance.ENGINE_CAPACITY, panel)
+            panel = setComboBox(carBrandNames, CAR_BRAND, panel)
+            panel = setComboBox(carModelNames, CAR_MODEL, panel)
+            panel = setComboBox(productionYearNames, PRODUCTION_YEAR, panel)
+            panel = setComboBox(engineCapacityName, ENGINE_CAPACITY, panel)
         } else if (type == InfoType.DRIVER_INFO) {
-            panel = setComboBox(licenceYearNames, CarInsurance.LICENCE_YEAR, panel)
-            panel = setComboBox(maritalStatusName, CarInsurance.MARITAL_STATUS, panel)
-            panel = setComboBox(regularCustomerAgeNames, CarInsurance.REGULAR_CUSTOMER_AGE, panel)
-            panel = setComboBox(hadAccidentNames, CarInsurance.HAD_ACCIDENT, panel)
+            panel = setComboBox(licenceYearNames, LICENCE_YEAR, panel)
+            panel = setComboBox(maritalStatusName, MARITAL_STATUS, panel)
+            panel = setComboBox(regularCustomerAgeNames, REGULAR_CUSTOMER_AGE, panel)
+            panel = setComboBox(hadAccidentNames, HAD_ACCIDENT, panel)
         } else if (type == InfoType.BUTTON_INFO) {
             panel.add(JButton("Reset"))
         }
         return panel
     }
+
 
     //checking if all combo boxes are set in panels
     fun isAllComboBoxesSet(carInfoPanel: JPanel, driverInfoPanel: JPanel): Boolean {
@@ -76,16 +76,6 @@ class CarInsuranceService(
                     .all { it.selectedItem != "" && it.selectedItem != null }
     }
 
-    //getting car from panel
-    private fun getCar(carInfoPanel: JPanel): Car {
-        var car = Car()
-        carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach {
-            when (it.name) {
-                CarInsurance.CAR_MODEL -> car = cars.find { car -> car.carModel == it.selectedItem as String }!!
-            }
-        }
-        return car
-    }
 
     //setting band models for given brand in panel
     fun changeBrandModel(carBrand: String, panel: JPanel) {
@@ -100,25 +90,6 @@ class CarInsuranceService(
         }
     }
 
-    //getting model names for given brand model
-    private fun getCorrectModelForBrand(cars: MutableList<Car>, carBrand: String = ""): Array<String> {
-        val carModels: MutableList<String> = ArrayList()
-        carModels.add("")
-        cars.forEach { car ->
-            if (car.carBrand == carBrand) {
-                carModels.add(car.carModel)
-            }
-        }
-        return carModels.toTypedArray()
-    }
-
-    //getting car brands from given car list
-    private fun getCarBrands(cars: MutableList<Car>): Array<String> {
-        val carBrands: MutableList<String> = ArrayList()
-        carBrands.add("")
-        carBrands.addAll(cars.map { it.carBrand }.distinct())
-        return carBrands.toTypedArray()
-    }
 
     //creating info panel for displaying insurance info
     fun crateInfoPanel(infoPanel: JPanel, priceInfoList: MutableList<PriceInfo>, carInfoPanel: JPanel): JPanel {
@@ -130,10 +101,12 @@ class CarInsuranceService(
         priceInfoList.forEach { priceInfo ->
             val infoTile = JPanel()
             infoTile.layout = GridLayout(1, 3)
-            infoTile.border = BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(),
+            infoTile.border = BorderFactory.createTitledBorder(
+                BorderFactory.createEtchedBorder(),
                 "",
                 TitledBorder.CENTER,
-                TitledBorder.ABOVE_TOP)
+                TitledBorder.ABOVE_TOP
+            )
 
             val infoTypeLabel = JLabel(priceInfo.infoType)
             val descLabel = JLabel(priceInfo.desc)
@@ -155,12 +128,14 @@ class CarInsuranceService(
 
     //removing duplicated attributes in CLIPs environment
     fun removeDuplicatedAttributes() {
-        val variableArray = arrayListOf(CarInsurance.PRODUCTION_YEAR,
+        val variableArray = arrayListOf(
+            CarInsurance.PRODUCTION_YEAR,
             CarInsurance.ENGINE_CAPACITY,
             CarInsurance.LICENCE_YEAR,
             CarInsurance.MARITAL_STATUS,
             CarInsurance.HAD_ACCIDENT,
-            CarInsurance.REGULAR_CUSTOMER_AGE)
+            CarInsurance.REGULAR_CUSTOMER_AGE
+        )
         variableArray.forEach {
             env.eval("(remove-duplicated-attributes $it)")
         }
@@ -206,6 +181,69 @@ class CarInsuranceService(
             cars.add(Car(carBrand, carModel, basePrice))
         }
         return cars
+    }
+
+    private fun swap(name: String): String {
+        return when (name) {
+            CAR_BRAND -> CarInsurance.CAR_BRAND
+            CAR_MODEL -> CarInsurance.CAR_MODEL
+            PRODUCTION_YEAR -> CarInsurance.PRODUCTION_YEAR
+            ENGINE_CAPACITY -> CarInsurance.ENGINE_CAPACITY
+            LICENCE_YEAR -> CarInsurance.LICENCE_YEAR
+            MARITAL_STATUS -> CarInsurance.MARITAL_STATUS
+            REGULAR_CUSTOMER_AGE -> CarInsurance.REGULAR_CUSTOMER_AGE
+            HAD_ACCIDENT -> CarInsurance.HAD_ACCIDENT
+            else -> ""
+        }
+    }
+
+    //getting model names for given brand model
+    private fun getCorrectModelForBrand(cars: MutableList<Car>, carBrand: String = ""): Array<String> {
+        val carModels: MutableList<String> = ArrayList()
+        carModels.add("")
+        cars.forEach { car ->
+            if (car.carBrand == carBrand) {
+                carModels.add(car.carModel)
+            }
+        }
+        return carModels.toTypedArray()
+    }
+
+    //getting car brands from given car list
+    private fun getCarBrands(cars: MutableList<Car>): Array<String> {
+        val carBrands: MutableList<String> = ArrayList()
+        carBrands.add("")
+        carBrands.addAll(cars.map { it.carBrand }.distinct())
+        return carBrands.toTypedArray()
+    }
+
+    //getting car from panel
+    fun getCar(carInfoPanel: JPanel): Car {
+        var car = Car()
+        carInfoPanel.components.filterIsInstance(JComboBox::class.java).forEach {
+            when (it.name) {
+                CarInsurance.CAR_MODEL -> car = cars.find { car -> car.carModel == it.selectedItem as String }!!
+            }
+        }
+        return car
+    }
+
+    //populating array for combo box
+    private fun populateYears(): Array<String> {
+        val years = ArrayList<String>()
+        years.add("")
+        IntStream.range(2000, 2023).forEach { year: Int -> years.add(year.toString()) }
+        return years.toTypedArray()
+    }
+
+    //setting combo box for window
+    private fun setComboBox(names: Array<String>, name: String, panel: JPanel): JPanel {
+        panel.add(JLabel(name))
+        val comboBox: JComboBox<String> = JComboBox(names)
+        comboBox.name = swap(name)
+        panel.add(comboBox)
+        comboBox.addActionListener(actionListener)
+        return panel
     }
 }
 
